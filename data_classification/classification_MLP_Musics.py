@@ -201,17 +201,20 @@ def main():
     # Export ONNX
     onnx_model_path = "model_classification_MLP_musics_spotify.onnx"
     model.eval()
+    model.eval()
     torch.onnx.export(
         model,                     # modèle PyTorch
         dummy_input,               # exemple d'entrée
         onnx_model_path,           # chemin de sauvegarde
         input_names=['input'],     # nom de l'entrée
         output_names=['output'],   # nom de la sortie
+        opset_version=18,# version ONNX (récent)
+        external_data=False,
         dynamic_axes={
             'input': {0: 'batch_size'},   # batch_size dynamique
             'output': {0: 'batch_size'}
         },
-        opset_version=18           # version ONNX (récent)
+        export_params=True     
     )
 
     print(f"✅ Modèle ONNX sauvegardé : {onnx_model_path}")

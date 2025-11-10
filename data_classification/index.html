@@ -1,0 +1,131 @@
+<html>
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/onnxruntime-web/dist/ort.min.js"></script>
+  <script src="index.js"></script>
+
+  <style>
+    table, th, td { border: 1px solid; }
+
+    /* Top row boxes (keep your originals) */
+    #leftbox { float:left; width:35%; height:300px; }
+    #middlebox{ float:left; width:25%; height:300px; }
+    #rightbox{ float:left; width:25%; height:300px; }
+
+    /* Make top Synthetic button box align + match style */
+    #syntheticButton{
+      float:left;
+      width:25%;
+      height:300px;
+      box-sizing:border-box;
+      border:1px solid red;     /* match bottom synthetic */
+      padding:10px;             /* optional spacing */
+    }
+
+    /* Original bottom synthetic (kept but overridden below) */
+    #syntheticbox{
+      float:right;
+      width:33%;
+      height:300px;
+      border:red;               /* invalid, fixed below */
+    }
+
+    h1{ color:green; text-align:center; }
+
+    /* ---- Clearfixes for rows ---- */
+    #boxes1:after { content:""; display:block; clear:both; }  /* <-- added */
+    #boxes2:after { content:""; display:block; clear:both; }
+
+    /* ---- Bottom row: force all four on one line, same size ---- */
+    #boxes2 #leftbox,
+    #boxes2 #middlebox,
+    #boxes2 #rightbox,
+    #boxes2 #syntheticbox {
+      float:left;
+      width:25%;                /* 4 × 25% = one row */
+      height:300px;
+      box-sizing:border-box;
+    }
+
+
+      /* ---- Bottom row: force all four on one line, same size ---- */
+    #boxes3 #leftboxHW,
+    #boxes3 #middleboxHW,
+    #boxes3 #rightboxHW,
+    #boxes3 #syntheticboxHW {
+      float:left;
+      width:25%;                /* 4 × 25% = one row */
+      height:300px;
+      box-sizing:border-box;
+    }
+
+    /* Fix bottom synthetic border + align color scheme */
+    #syntheticbox { border:1px solid red; padding:10px; }
+
+    /* Top row: force a 4-column grid and push Synthetic to column 4 */
+    #boxes1 #leftbox { width:25%; }
+    #boxes1 #middlebox { width:25%; }
+    #boxes1 #syntheticButton { width:25%; margin-left:25%; } /* sits in the 4th 25% slot */
+
+    #syntheticbox > div {
+      float: left;
+      width: 50%;
+      box-sizing: border-box;
+    }
+
+
+    
+  </style>
+</head>
+<body>
+  <h1>Music Genre Classification — 10 Features — 10 Genres - MLP & Deep Learning (10x10)</h1>
+
+  <div id="boxes1">
+    <div id="leftbox">
+      <h2>MLP Classification</h2>
+      <input type="text" id="mlp_box0" value="0.12"> acousticness <br/>
+      <input type="text" id="mlp_box1" value="0.85"> danceability <br/>
+      <input type="text" id="mlp_box2" value="210000"> duration_ms <br/>
+      <input type="text" id="mlp_box3" value="0.0"> energy <br/>
+      <input type="text" id="mlp_box4" value="0.45"> instrumentalness <br/>
+      <input type="text" id="mlp_box5" value="0.3"> liveness <br/>
+      <input type="text" id="mlp_box6" value="0.12"> loudness <br/>
+      <input type="text" id="mlp_box7" value="0.55"> speechiness <br/>
+      <input type="text" id="mlp_box8" value="120.0"> tempo <br/>
+      <input type="text" id="mlp_box9" value="0.65"> valence <br/>
+      <div><input style="background-color:yellow" type="button" value="Run" onclick="runExample1()"/></div>
+    </div>
+
+    <div id="middlebox">
+      <h2>DL Classification</h2>
+      <input type="text" id="dl_box0" value="0.12"> acousticness <br/>
+      <input type="text" id="dl_box1" value="0.85"> danceability <br/>
+      <input type="text" id="dl_box2" value="210000"> duration_ms <br/>
+      <input type="text" id="dl_box3" value="0.0"> energy <br/>
+      <input type="text" id="dl_box4" value="0.45"> instrumentalness <br/>
+      <input type="text" id="dl_box5" value="0.3"> liveness <br/>
+      <input type="text" id="dl_box6" value="0.12"> loudness <br/>
+      <input type="text" id="dl_box7" value="0.55"> speechiness <br/>
+      <input type="text" id="dl_box8" value="120.0"> tempo <br/>
+      <input type="text" id="dl_box9" value="0.65"> valence <br/>
+      <div><input style="background-color:yellow" type="button" value="Run" onclick="runExample2()"/></div>
+      
+    </div>
+
+    
+     
+    
+  </div>
+
+  <div id="boxes2">
+    <div id="leftbox">
+      <h2>From Inference</h2>
+      <div id="predictions1"></div>
+    </div>
+
+    <div id="middlebox">
+      <h2>To Inference</h2>
+      <div id="predictions2"></div> 
+    </div>
+  </div>
+</body>
+</html>

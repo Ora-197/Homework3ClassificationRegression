@@ -201,11 +201,15 @@ def main():
         onnx_model_path,           # chemin de sauvegarde
         input_names=['input'],     # nom de l'entrée
         output_names=['output'],   # nom de la sortie
+        opset_version=18,# version ONNX (récent)
+        external_data=False,
         dynamic_axes={
             'input': {0: 'batch_size'},   # batch_size dynamique
             'output': {0: 'batch_size'}
         },
-        opset_version=18           # version ONNX (récent)
+        export_params=True 
+        
+        
     )
 
     print(f"✅ Modèle ONNX sauvegardé : {onnx_model_path}")
@@ -224,59 +228,59 @@ if __name__ == "__main__":
 Genres retenus : ['Comedy', 'Soundtrack', 'Indie', 'Jazz', 'Pop', 'Electronic', 'Children’s Music', 'Folk', 'Hip-Hop', 'Rock']
 Échantillons par genre : 500 (total ≈ 5000)
 Dataset final : (5000, 11)
-0 loss= tensor(2.1507, grad_fn=<NllLossBackward0>)
-100 loss= tensor(1.4537, grad_fn=<NllLossBackward0>)
-200 loss= tensor(1.1782, grad_fn=<NllLossBackward0>)
-300 loss= tensor(1.2776, grad_fn=<NllLossBackward0>)
-400 loss= tensor(1.2968, grad_fn=<NllLossBackward0>)
-500 loss= tensor(1.3947, grad_fn=<NllLossBackward0>)
-600 loss= tensor(1.0861, grad_fn=<NllLossBackward0>)
-700 loss= tensor(1.0494, grad_fn=<NllLossBackward0>)
-800 loss= tensor(1.6447, grad_fn=<NllLossBackward0>)
-900 loss= tensor(1.2455, grad_fn=<NllLossBackward0>)
-1000 loss= tensor(1.3367, grad_fn=<NllLossBackward0>)
-1100 loss= tensor(1.1433, grad_fn=<NllLossBackward0>)
-1200 loss= tensor(1.6087, grad_fn=<NllLossBackward0>)
-1300 loss= tensor(1.2118, grad_fn=<NllLossBackward0>)
-1400 loss= tensor(1.2450, grad_fn=<NllLossBackward0>)
-1500 loss= tensor(1.4591, grad_fn=<NllLossBackward0>)
-1600 loss= tensor(1.3884, grad_fn=<NllLossBackward0>)
-1700 loss= tensor(1.1545, grad_fn=<NllLossBackward0>)
-1800 loss= tensor(1.7574, grad_fn=<NllLossBackward0>)
-1900 loss= tensor(1.2933, grad_fn=<NllLossBackward0>)
-2000 loss= tensor(1.4465, grad_fn=<NllLossBackward0>)
-2100 loss= tensor(1.2289, grad_fn=<NllLossBackward0>)
-2200 loss= tensor(1.2781, grad_fn=<NllLossBackward0>)
-2300 loss= tensor(1.2324, grad_fn=<NllLossBackward0>)
-2400 loss= tensor(1.2593, grad_fn=<NllLossBackward0>)
-2500 loss= tensor(1.3964, grad_fn=<NllLossBackward0>)
-2600 loss= tensor(1.1671, grad_fn=<NllLossBackward0>)
-2700 loss= tensor(1.5792, grad_fn=<NllLossBackward0>)
-2800 loss= tensor(1.0575, grad_fn=<NllLossBackward0>)
-2900 loss= tensor(1.3543, grad_fn=<NllLossBackward0>)
-3000 loss= tensor(1.3858, grad_fn=<NllLossBackward0>)
-3100 loss= tensor(1.1871, grad_fn=<NllLossBackward0>)
-3200 loss= tensor(1.1839, grad_fn=<NllLossBackward0>)
-3300 loss= tensor(1.3189, grad_fn=<NllLossBackward0>)
-3400 loss= tensor(1.2383, grad_fn=<NllLossBackward0>)
-3500 loss= tensor(1.3619, grad_fn=<NllLossBackward0>)
-3600 loss= tensor(1.2097, grad_fn=<NllLossBackward0>)
-3700 loss= tensor(1.3086, grad_fn=<NllLossBackward0>)
-3800 loss= tensor(1.2693, grad_fn=<NllLossBackward0>)
-3900 loss= tensor(1.2616, grad_fn=<NllLossBackward0>)
-Accuracy: 0.45
+0 loss= tensor(2.1273, grad_fn=<NllLossBackward0>)
+100 loss= tensor(1.3337, grad_fn=<NllLossBackward0>)
+200 loss= tensor(1.5126, grad_fn=<NllLossBackward0>)
+300 loss= tensor(1.3639, grad_fn=<NllLossBackward0>)
+400 loss= tensor(1.6238, grad_fn=<NllLossBackward0>)
+500 loss= tensor(1.5149, grad_fn=<NllLossBackward0>)
+600 loss= tensor(1.1207, grad_fn=<NllLossBackward0>)
+700 loss= tensor(1.6785, grad_fn=<NllLossBackward0>)
+800 loss= tensor(1.3415, grad_fn=<NllLossBackward0>)
+900 loss= tensor(1.1310, grad_fn=<NllLossBackward0>)
+1000 loss= tensor(1.4784, grad_fn=<NllLossBackward0>)
+1100 loss= tensor(1.2845, grad_fn=<NllLossBackward0>)
+1200 loss= tensor(1.0248, grad_fn=<NllLossBackward0>)
+1300 loss= tensor(1.2126, grad_fn=<NllLossBackward0>)
+1400 loss= tensor(1.2547, grad_fn=<NllLossBackward0>)
+1500 loss= tensor(1.1476, grad_fn=<NllLossBackward0>)
+1600 loss= tensor(1.3375, grad_fn=<NllLossBackward0>)
+1700 loss= tensor(1.2044, grad_fn=<NllLossBackward0>)
+1800 loss= tensor(1.5527, grad_fn=<NllLossBackward0>)
+1900 loss= tensor(1.1654, grad_fn=<NllLossBackward0>)
+2000 loss= tensor(1.2822, grad_fn=<NllLossBackward0>)
+2100 loss= tensor(1.4433, grad_fn=<NllLossBackward0>)
+2200 loss= tensor(1.2864, grad_fn=<NllLossBackward0>)
+2300 loss= tensor(1.2647, grad_fn=<NllLossBackward0>)
+2400 loss= tensor(1.2332, grad_fn=<NllLossBackward0>)
+2500 loss= tensor(1.5478, grad_fn=<NllLossBackward0>)
+2600 loss= tensor(1.1023, grad_fn=<NllLossBackward0>)
+2700 loss= tensor(1.4661, grad_fn=<NllLossBackward0>)
+2800 loss= tensor(1.1933, grad_fn=<NllLossBackward0>)
+2900 loss= tensor(1.1238, grad_fn=<NllLossBackward0>)
+3000 loss= tensor(0.9991, grad_fn=<NllLossBackward0>)
+3100 loss= tensor(1.2138, grad_fn=<NllLossBackward0>)
+3200 loss= tensor(1.3137, grad_fn=<NllLossBackward0>)
+3300 loss= tensor(1.1614, grad_fn=<NllLossBackward0>)
+3400 loss= tensor(1.3372, grad_fn=<NllLossBackward0>)
+3500 loss= tensor(1.4353, grad_fn=<NllLossBackward0>)
+3600 loss= tensor(1.2492, grad_fn=<NllLossBackward0>)
+3700 loss= tensor(1.3780, grad_fn=<NllLossBackward0>)
+3800 loss= tensor(0.8785, grad_fn=<NllLossBackward0>)
+3900 loss= tensor(1.2485, grad_fn=<NllLossBackward0>)
+Accuracy: 0.47
 Confusion Matrix:
-[[52  6  4  0 10  2  6  7  3 11]
- [35  6 10  1 15  8  8 15  2  8]
- [ 4  3 57  0  6 11 13  6  6  7]
- [ 2  0  0 86  1  3  2  0  0  0]
- [ 2  7  5  0 33 11  4  6  0 16]
- [ 0  4  6  0  2 54  1 16  0  1]
- [24  3 15  0  3  8 43  3  7  3]
- [10  4  2  0 12 29  1 25  1 15]
- [ 5  1  1  0  2  1  3  1 86  0]
- [32  5  5  0 31  5  2 13  3 12]]
-Precision: 0.442
-Recall: 0.454
-F1-measure: 0.438
+[[51  8  6  0 16  1  5  5  2  7]
+ [31 17  8  1 21  9  5  9  2  5]
+ [ 5  2 54  0 10  9 16  8  5  4]
+ [ 2  1  0 86  1  3  1  0  0  0]
+ [ 6  6  3  0 37  9  3  9  0 11]
+ [ 0  6  4  0  6 56  0 12  0  0]
+ [25  6 11  0  2  8 45  3  7  2]
+ [11  8  1  0 19 24  1 21  1 13]
+ [ 5  2  0  0  3  1  5  0 84  0]
+ [27  5  3  0 32  5  3 12  4 17]]
+Precision: 0.477
+Recall: 0.468
+F1-measure: 0.460
 '''
