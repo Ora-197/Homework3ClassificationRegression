@@ -13,41 +13,41 @@ from mlxtend.plotting import heatmap
 np.set_printoptions(precision=4, suppress=True)
 
 
-def get_dataset_from_kaggle_classification(target_total=5000):
+def get_dataset_from_kaggle_classification(target_total=5000) -> pd.DataFrame:
     """
-    Charge un CSV de musique, garde les 6 genres les plus fréquents,
-    et crée un dataset équilibré d'environ target_total samples.
+    Loads a music CSV, keeps the 10 most frequent genres,
+    and creates a balanced dataset with approximately target_total samples.
     
     Args:
-        csv_path (str): chemin vers le CSV
-        target_total (int): nombre total d'exemples à générer (~5000)
+        target_total (int): total number of examples to generate (~5000)
     
     Returns:
-        pd.DataFrame: dataset équilibré avec 6 genres
+        pd.DataFrame: balanced dataset with 10 genres
+    
     """
-    #df = pd.read_csv("/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv")
     df = pd.read_csv('/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv')
-    # Colonnes numériques utiles
+    
+    # Useful numeric columns
     features_numeric = [
         'acousticness', 'danceability', 'duration_ms', 'energy',
         'instrumentalness', 'liveness', 'loudness', 'speechiness', 
         'tempo', 'valence'
     ]
 
-    # Supprimer les lignes avec NaN
+    # Drop rows with NaN
     df = df.dropna(subset=['genre'] + features_numeric)
     df = df[features_numeric + ['genre']]
 
-    # Top 6 genres
+    # Top 10 genres
     top10_genres = df['genre'].value_counts().nlargest(10).index.tolist()
 
-    print("Genres retenus :", top10_genres)
+    print("Selected genres:", top10_genres)
 
-    # Nombre d'exemples par genre
+    # Number of examples per genre
     per_genre = target_total // len(top10_genres)
-    print(f"Échantillons par genre : {per_genre} (total ≈ {per_genre*len(top10_genres)})")
+    print(f"Samples per genre: {per_genre} (total ≈ {per_genre*len(top10_genres)})")
 
-    # Créer le dataset équilibré
+    # Create balanced dataset
     df_balanced = (
         df[df['genre'].isin(top10_genres)]
         .groupby('genre')
@@ -56,14 +56,29 @@ def get_dataset_from_kaggle_classification(target_total=5000):
         .reset_index(drop=True)
     )
 
-    print("Dataset final :", df_balanced.shape)
+    print("Final dataset:", df_balanced.shape)
     return df_balanced
-def get_genre_mapping(df):
+
+
+def get_genre_mapping(df: pd.DataFrame) -> dict:
+    """
+    Creates a mapping from genre names to numeric class indices.
+    
+    Args:
+        df (pd.DataFrame): Dataset containing the 'genre' column.
+    
+    Returns:
+        dict: Mapping from genre to integer index.
+    """
     genre_mapping = {genre: idx for idx, genre in enumerate(df['genre'].unique())}
     return genre_mapping
-# === Définition du MLP identique à celui entraîné ===
+
+
 class MLP_Net(nn.Module):
-    def __init__(self, x_means, x_devs, n_classes=10):
+    """
+    Multi-layer Perceptron (MLP) for music genre classification.
+    """
+    def __init__(self, x_means: torch.Tensor, x_devs: torch.Tensor, n_classes: int = 10):
         super().__init__()
         self.x_means = x_means
         self.x_devs = x_devs
@@ -73,7 +88,7 @@ class MLP_Net(nn.Module):
         self.dropout = nn.Dropout(0.3)
         self.linear2 = nn.Linear(64, n_classes)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = (x - self.x_means) / self.x_devs
         x = self.linear1(x)
         x = self.bn1(x)
@@ -81,27 +96,30 @@ class MLP_Net(nn.Module):
         x = self.dropout(x)
         x = self.linear2(x)
         return x
+
+
 class DL_Net(nn.Module):
-    
-    def __init__(self, x_means, x_deviations, n_classes=10):
+    """
+    Deep neural network with two hidden layers for music genre classification.
+    """
+    def __init__(self, x_means: torch.Tensor, x_deviations: torch.Tensor, n_classes: int = 10):
         super().__init__()
-        
-        self.x_means      = x_means
+        self.x_means = x_means
         self.x_deviations = x_deviations
-        
-        self.linear1   = nn.Linear(10, 64)
-        self.bn1       = nn.BatchNorm1d(64)
-        self.act1      = nn.ReLU()
-        self.dropout1  = nn.Dropout(0.25)
-        
-        self.linear2   = nn.Linear(64, 32)
-        self.bn2       = nn.BatchNorm1d(32)
-        self.act2      = nn.ReLU()
-        self.dropout2  = nn.Dropout(0.25)
 
-        self.linear3   = nn.Linear(32, n_classes)  # Pas de Softmax ici (CrossEntropyLoss le fait)
+        self.linear1 = nn.Linear(10, 64)
+        self.bn1 = nn.BatchNorm1d(64)
+        self.act1 = nn.ReLU()
+        self.dropout1 = nn.Dropout(0.25)
 
-    def forward(self, x):
+        self.linear2 = nn.Linear(64, 32)
+        self.bn2 = nn.BatchNorm1d(32)
+        self.act2 = nn.ReLU()
+        self.dropout2 = nn.Dropout(0.25)
+
+        self.linear3 = nn.Linear(32, n_classes)  # logits, no softmax here
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         x = (x - self.x_means) / self.x_deviations
 
         x = self.linear1(x)
@@ -116,10 +134,31 @@ class DL_Net(nn.Module):
 
         x = self.linear3(x)
         return x  # logits
-# === Fonction d'inférence ===
-def predict_genre(sample_features, model_path, x_means, x_devs, class_labels, n_classes=10):
+
+
+def predict_genre(
+    sample_features: np.ndarray,
+    model_path: str,
+    x_means: torch.Tensor,
+    x_devs: torch.Tensor,
+    class_labels: dict,
+    n_classes: int = 10
+) -> tuple:
+    """
+    Predicts the genre of a single music sample using a trained PyTorch model.
+
+    Args:
+        sample_features (np.ndarray): Feature vector of a single sample.
+        model_path (str): Path to the trained model (.pt file).
+        x_means (torch.Tensor): Tensor of training feature means.
+        x_devs (torch.Tensor): Tensor of training feature standard deviations.
+        class_labels (dict): Mapping from class index to genre name.
+        n_classes (int): Number of output classes.
+
+    Returns:
+        tuple: (predicted genre (str), probabilities (np.ndarray))
+    """
     model = MLP_Net(x_means, x_devs, n_classes=n_classes)
-    #model = DL_Net(x_means, x_devs, n_classes=n_classes)
     model.load_state_dict(torch.load(model_path))
     model.eval()
 
@@ -134,12 +173,8 @@ def predict_genre(sample_features, model_path, x_means, x_devs, class_labels, n_
 
     return predicted_genre, probs.numpy()
 
-# === Exemple concret ===
-# x_means et x_devs doivent être calculés sur ton train set
-# Ici, je suppose que tu as déjà ces tensors depuis l'entraînement
-# x_means = X_train_tr.mean(0, keepdim=True)
-# x_devs  = X_train_tr.std(0, keepdim=True) + 1e-4
 
+# === Example usage ===
 index_to_genre = {
     0: 'Folk',
     1: 'Indie',
@@ -154,24 +189,16 @@ index_to_genre = {
 }
 
 samples_test = [
-    # Sample 1 : plutôt énergique et dansant → Pop / Electronic
     np.array([0.12, 0.85, 210000, 0.0, 0.45, 0.3, 0.12, 0.55, 120.0, 0.65], dtype=np.float32),
-
-    # Sample 2 : calme et acoustique → Folk / Indie
     np.array([0.80, 0.40, 180000, 0.25, 0.00, 0.10, -12.0, 0.03, 90.0, 0.20], dtype=np.float32),
-
-    # Sample 3 : vocal et rythmique → Hip-Hop / Comedy
     np.array([0.05, 0.75, 210000, 0.70, 0.00, 0.20, -6.5, 0.20, 100.0, 0.60], dtype=np.float32),
-
-    # Sample 4 : orchestral / instrumental → Soundtrack / Jazz
     np.array([0.15, 0.35, 240000, 0.50, 0.60, 0.30, -10.0, 0.02, 70.0, 0.30], dtype=np.float32),
 ]
 
 model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/model_classification_MLP_musics_spotify.pt"
-#model_path = '/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/model_classification_dl_musics_spotify.pt'
 epsilon = 0.0001
-musics = get_dataset_from_kaggle_classification()
 
+musics = get_dataset_from_kaggle_classification()
 genre_mapping = get_genre_mapping(musics)
 print("Genre mapping:", genre_mapping)
 
@@ -191,8 +218,8 @@ y_test_tr = torch.from_numpy(y_test)
 
 x_means = X_train_tr.mean(0, keepdim=True)
 x_deviations = X_train_tr.std(0, keepdim=True) + epsilon
-# Exemple d'utilisation avec la fonction predict_genre
+
 for i, sample in enumerate(samples_test, 1):
     genre_pred, probs = predict_genre(sample, model_path, x_means, x_deviations, index_to_genre)
-    print(f"Sample {i}: 🎵 Genre prédit → {genre_pred}")
-    print(f"Probabilités → {probs}\n")
+    print(f"Sample {i}: Predicted genre → {genre_pred}")
+    print(f"Probabilities → {probs}\n")

@@ -14,44 +14,43 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, precision_score, recall_score, accuracy_score, f1_score
 
 ############################################
-# 1) Chargement du dataset
+# 1) Load the dataset
 ############################################
 
 def get_dataset_from_kaggle_classification(target_total=5000):
     """
-    Charge un CSV de musique, garde les 6 genres les plus fréquents,
-    et crée un dataset équilibré d'environ target_total samples.
+    Loads a music CSV, keeps the 10 most frequent genres,
+    and creates a balanced dataset with approximately target_total samples.
     
     Args:
-        csv_path (str): chemin vers le CSV
-        target_total (int): nombre total d'exemples à générer (~5000)
+        target_total (int): total number of examples to generate (~5000)
     
     Returns:
-        pd.DataFrame: dataset équilibré avec 6 genres
+        pd.DataFrame: balanced dataset with 10 genres
     """
     df = pd.read_csv("/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv")
 
-    # Colonnes numériques utiles
+    # Useful numeric columns
     features_numeric = [
         'acousticness', 'danceability', 'duration_ms', 'energy',
         'instrumentalness', 'liveness', 'loudness', 'speechiness', 
         'tempo', 'valence'
     ]
 
-    # Supprimer les lignes avec NaN
+    # Drop rows with NaN
     df = df.dropna(subset=['genre'] + features_numeric)
     df = df[features_numeric + ['genre']]
 
-    # Top 6 genres
+    # Top 10 genres
     top10_genres = df['genre'].value_counts().nlargest(10).index.tolist()
 
-    print("Genres retenus :", top10_genres)
+    print("Selected genres:", top10_genres)
 
-    # Nombre d'exemples par genre
+    # Number of examples per genre
     per_genre = target_total // len(top10_genres)
-    print(f"Échantillons par genre : {per_genre} (total ≈ {per_genre*len(top10_genres)})")
+    print(f"Samples per genre: {per_genre} (total ≈ {per_genre*len(top10_genres)})")
 
-    # Créer le dataset équilibré
+    # Create balanced dataset
     df_balanced = (
         df[df['genre'].isin(top10_genres)]
         .groupby('genre')
@@ -60,14 +59,14 @@ def get_dataset_from_kaggle_classification(target_total=5000):
         .reset_index(drop=True)
     )
 
-    print("Dataset final :", df_balanced.shape)
+    print("Final dataset:", df_balanced.shape)
     return df_balanced
 
 def get_genre_mapping(df):
     return {genre: idx for idx, genre in enumerate(df['genre'].unique())}
 
 ############################################
-# 2) Réseau profond (2 hidden layers)
+# 2) Deep network (2 hidden layers)
 ############################################
 
 class DL_Net(nn.Module):
@@ -88,7 +87,7 @@ class DL_Net(nn.Module):
         self.act2      = nn.ReLU()
         self.dropout2  = nn.Dropout(0.25)
 
-        self.linear3   = nn.Linear(32, n_classes)  # Pas de Softmax ici (CrossEntropyLoss le fait)
+        self.linear3   = nn.Linear(32, n_classes)  # No Softmax here (CrossEntropyLoss does it)
 
     def forward(self, x):
         x = (x - self.x_means) / self.x_deviations
@@ -107,7 +106,7 @@ class DL_Net(nn.Module):
         return x  # logits
 
 ############################################
-# 3) Boucle d'entraînement
+# 3) Training loop
 ############################################
 
 def training_loop(N_Epochs, model, loss_fn, opt, train_dl):
@@ -124,7 +123,7 @@ def training_loop(N_Epochs, model, loss_fn, opt, train_dl):
             print(epoch, "loss=", loss)
 
 ############################################
-# 4) Fonction métriques
+# 4) Metrics function
 ############################################
 
 def print_metrics_function(y_test, y_pred):
@@ -142,7 +141,7 @@ def print_metrics_function(y_test, y_pred):
 
 def main():
     np.set_printoptions(precision=4, suppress=True)
-    batch_size    = 64 # Car modele pas enorme 
+    batch_size    = 64 # Because model is not huge
     learning_rate = 0.0005## 0.001
     N_Epochs      = 4000
     epsilon = 0.0001
@@ -188,23 +187,23 @@ def main():
     torch.save(model.state_dict(), "model_classification_DL_musics_spotify.pt")
     
     
-    # Dummy input pour ONNX (la forme doit correspondre à ton modèle)
-    # Ici batch_size=1 et 10 features
+    # Dummy input for ONNX (shape must match your model)
+    # Here batch_size=1 and 10 features
     dummy_input = torch.randn(1, 10, dtype=torch.float32)
 
     # Export ONNX
     onnx_model_path = "model_classification_DL_musics_spotify.onnx"
     model.eval()
     torch.onnx.export(
-        model,                     # modèle PyTorch
-        dummy_input,               # exemple d'entrée
-        onnx_model_path,           # chemin de sauvegarde
-        input_names=['input'],     # nom de l'entrée
-        output_names=['output'],   # nom de la sortie
-        opset_version=18,# version ONNX (récent)
+        model,                     # PyTorch model
+        dummy_input,               # example input
+        onnx_model_path,           # save path
+        input_names=['input'],     # input name
+        output_names=['output'],   # output name
+        opset_version=18,# ONNX version (recent)
         external_data=False,
         dynamic_axes={
-            'input': {0: 'batch_size'},   # batch_size dynamique
+            'input': {0: 'batch_size'},   # dynamic batch_size
             'output': {0: 'batch_size'}
         },
         export_params=True 
@@ -212,7 +211,7 @@ def main():
         
     )
 
-    print(f"✅ Modèle ONNX sauvegardé : {onnx_model_path}")
+    print(f"✅ ONNX model saved: {onnx_model_path}")
     
     
     with torch.no_grad():
@@ -223,6 +222,7 @@ def main():
 
 if __name__ == "__main__":
     main()
+
 
 '''
 Genres retenus : ['Comedy', 'Soundtrack', 'Indie', 'Jazz', 'Pop', 'Electronic', 'Children’s Music', 'Folk', 'Hip-Hop', 'Rock']
