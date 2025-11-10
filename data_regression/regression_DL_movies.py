@@ -1,269 +1,274 @@
 import pandas as pd
-from sklearn.feature_extraction.text import TfidfVectorizer
-from scipy.sparse import hstack
-from sklearn.preprocessing import LabelEncoder
-###########
 import numpy as np
 import torch
-import pandas as pd
-import sklearn
-import random
-
 import torch.nn as nn
 import torch.nn.functional as F
-import torch.optim as optim
+from torch.utils.data import TensorDataset, DataLoader
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import r2_score
+from mlxtend.plotting import heatmap
+import random
 import matplotlib.pyplot as plt
 
-from mlxtend.plotting import heatmap
-from sklearn.model_selection import train_test_split
-from torch.utils.data import TensorDataset, DataLoader
+def get_dataset_from_kaggle_regression() -> pd.DataFrame:
+    """
+    Load and preprocess the movie dataset for regression.
 
-## coefficient of determination 
-from sklearn.metrics import r2_score
+    Steps:
+        - Load CSV
+        - Filter movies with sufficient votes
+        - Convert release_date to datetime and extract year
+        - Convert budget and revenue to numeric
+        - Keep only movies with valid budget and revenue
+        - Compute ROI (revenue / budget)
+        - Drop rows with NaN in important columns
+        - Keep selected numeric features
+        - Keep top 5000 movies with most votes
+        - Remove NaNs and zero values
 
-import xgboost as xgb
-import onnxruntime as rt
-import onnxmltools
-from skl2onnx.common.data_types import FloatTensorType
-import regressor
-def get_dataset_from_kaggle_regression():
-    # 0️⃣ Charger le fichier CSV
-    movies = pd.read_csv("/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv", low_memory=False)
+    Returns:
+        pd.DataFrame: preprocessed dataset with numeric features
+    """
+    movies = pd.read_csv(
+        "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv",
+        low_memory=False
+    )
 
-    # 1️⃣ Copier le dataset pour sécurité
     movies = movies.copy()
 
-    # 2️⃣ Convertir et filtrer vote_count
+    # Filter vote_count
     movies['vote_count'] = pd.to_numeric(movies['vote_count'], errors='coerce')
     movies = movies[movies['vote_count'] > 40]
 
-    # 3️⃣ Convertir la date et extraire l'année
+    # Extract year from release_date
     movies['release_date'] = pd.to_datetime(movies['release_date'], errors='coerce')
     movies['year'] = movies['release_date'].dt.year
 
-    # 4️⃣ Convertir budget et revenue
+    # Convert budget and revenue
     movies['budget'] = pd.to_numeric(movies['budget'], errors='coerce')
     movies['revenue'] = pd.to_numeric(movies['revenue'], errors='coerce')
-
-    # 5️⃣ Garder films avec budget et revenue valides
     movies = movies[(movies['budget'] > 0) & (movies['revenue'] > 0)]
 
-    # 6️⃣ Calculer ROI
+    # Compute ROI
     movies['roi'] = movies['revenue'] / movies['budget']
 
-    # 7️⃣ Supprimer les lignes avec NaN sur les colonnes importantes
+    # Drop NaNs
     movies = movies.dropna(subset=['year', 'budget', 'revenue', 'roi'])
 
-    # 8️⃣ Sélection des features numériques
+    # Select numeric features
     features_numeric = ['vote_count', 'budget', 'revenue', 'roi', 'year', 'runtime', 'popularity', 'vote_average']
     movies['vote_average'] = movies['vote_average'].round().astype(int)
     movies['popularity'] = pd.to_numeric(movies['popularity'], errors='coerce')
-    movies = movies[features_numeric ]  # ajouter title pour TF-IDF
+    movies = movies[features_numeric]
 
-    # 9️⃣ Prendre les 5000 films avec le plus de votes
+    # Keep top 5000 movies with most votes
     movies = movies.sort_values(by='vote_count', ascending=False).head(5000)
 
-    # 🔟 Supprimer NaN et lignes avec 0
+    # Remove NaNs and zero values
     movies = movies.dropna()
     movies = movies[(movies != 0).all(axis=1)]
     
     return movies
 
-def get_graph(movies):
+
+def get_graph(movies: pd.DataFrame):
+    """
+    Plot a heatmap of correlations between numeric features.
+
+    Args:
+        movies (pd.DataFrame): dataset containing numeric features
+    """
     features = movies.columns.values.tolist()
-    cm = np.corrcoef( movies[features].values.T   )
-    hm = heatmap(cm, row_names=features, column_names=features, figsize=(20,10))
+    cm = np.corrcoef(movies[features].values.T)
+    heatmap(cm, row_names=features, column_names=features, figsize=(20, 10))
     plt.show()
 
-###################################
 
-## Deep Learning with 2 hidden layers
-
+# === Deep Learning Model with 2 hidden layers ===
 class DL_Net(nn.Module):
-    ## init the class
-    def __init__(self, x_means, x_deviations):
+    """
+    Deep learning regression model with two hidden layers.
+    """
+    def __init__(self, x_means: torch.Tensor, x_deviations: torch.Tensor):
         super().__init__()
-        
-        self.x_means      = x_means
+        self.x_means = x_means
         self.x_deviations = x_deviations
-        
+
         self.linear1 = nn.Linear(7, 10)
-        self.act1    = nn.ReLU()
+        self.act1 = nn.ReLU()
         self.linear2 = nn.Linear(10, 6)
-        self.act2    = nn.ReLU()
+        self.act2 = nn.ReLU()
         self.linear3 = nn.Linear(6, 1)
         self.dropout = nn.Dropout(0.25)
-        
-    ## perform inference
-    def forward(self, x):
-        
+
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass: normalize input and apply two hidden layers with ReLU.
+        """
         x = (x - self.x_means) / self.x_deviations
-        
         x = self.linear1(x)
         x = self.act1(x)
         x = self.linear2(x)
         x = self.act2(x)
-        ## x = self.dropout(x)
         y_pred = self.linear3(x)
-        
-        ## return torch.round( y_pred )
         return y_pred
 
 
+def training_loop(N_Epochs: int, model: nn.Module, loss_fn, opt: torch.optim.Optimizer, train_dl: DataLoader):
+    """
+    Training loop for the neural network.
 
-
-def training_loop( N_Epochs, model, loss_fn, opt, train_dl ):
-    
+    Args:
+        N_Epochs (int): number of epochs
+        model (nn.Module): PyTorch model to train
+        loss_fn: loss function (e.g., F.mse_loss)
+        opt (torch.optim.Optimizer): optimizer
+        train_dl (DataLoader): training data loader
+    """
     for epoch in range(N_Epochs):
         for xb, yb in train_dl:
-            
             y_pred = model(xb)
-            loss   = loss_fn(y_pred, yb)
-            
+            loss = loss_fn(y_pred, yb)
+
             opt.zero_grad()
             loss.backward()
             opt.step()
-            
+
         if epoch % 20 == 0:
             print(epoch, "loss=", loss)
 
-def main(): 
-    ################################
-    #Parameters
-    batch_size    = 16
-    learning_rate = 0.005 ## 0.001
-    N_Epochs      = 100
 
-    epsilon = 0.0001
+def main():
+    # Parameters
+    batch_size = 16
+    learning_rate = 0.005
+    N_Epochs = 100
+    epsilon = 1e-4
     np.set_printoptions(precision=4, suppress=True)
-    #################################
-    
-    
+
+    # Load dataset
     movies = get_dataset_from_kaggle_regression()
     movies_raw_data_np = movies.to_numpy()
     X = movies_raw_data_np[:, :-1]
-    #Between 3 and 9
     Y = movies_raw_data_np[:, 7:8]
-    random_seed = int( random.random() * 100 )     ## 42
-    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=random_seed)
-    ## fix data type
 
-    X_train = X_train.astype(  np.float32  )
-    X_test  = X_test.astype(   np.float32  )
-    y_train = y_train.astype(  np.float32  )
-    y_test  = y_test.astype(   np.float32  )
+    random_seed = int(random.random() * 100)
+    X_train, X_test, y_train, y_test = train_test_split(X, Y, test_size=0.2, random_state=random_seed)
+
+    # Convert data type
+    X_train = X_train.astype(np.float32)
+    X_test = X_test.astype(np.float32)
+    y_train = y_train.astype(np.float32)
+    y_test = y_test.astype(np.float32)
+
     X_train_tr = torch.from_numpy(X_train)
-    X_test_tr  = torch.from_numpy(X_test)
+    X_test_tr = torch.from_numpy(X_test)
     y_train_tr = torch.from_numpy(y_train)
-    y_test_tr  = torch.from_numpy(y_test)
-    x_means      = X_train_tr.mean(0, keepdim=True ) 
-    x_deviations = X_train_tr.std( 0, keepdim=True) + epsilon
-    train_ds = TensorDataset( X_train_tr, y_train_tr  )
-    train_dl = DataLoader( train_ds, batch_size, shuffle=True  )
-    
-    ################################
-    #def core_function Linear Regression
-    ################################
-    
-   
-    model = DL_Net( x_means, x_deviations  )
-    opt     = torch.optim.Adam(    model.parameters(), lr=learning_rate )
+    y_test_tr = torch.from_numpy(y_test)
+
+    x_means = X_train_tr.mean(0, keepdim=True)
+    x_deviations = X_train_tr.std(0, keepdim=True) + epsilon
+
+    train_ds = TensorDataset(X_train_tr, y_train_tr)
+    train_dl = DataLoader(train_ds, batch_size, shuffle=True)
+
+    # Initialize model
+    model = DL_Net(x_means, x_deviations)
+    opt = torch.optim.Adam(model.parameters(), lr=learning_rate)
     loss_fn = F.mse_loss
-    training_loop(  N_Epochs, model, loss_fn, opt, train_dl)
+
+    # Training
+    training_loop(N_Epochs, model, loss_fn, opt, train_dl)
     torch.save(model.state_dict(), "model_regression_DL_movies.pt")
-    
-    # Export ONNX
-    # Dummy input pour ONNX (la forme doit correspondre à ton modèle)
-    # Ici batch_size=1 et 7 features
+
+    # Export to ONNX
     dummy_input = torch.randn(1, 7, dtype=torch.float32)
     onnx_model_path = "model_regression_DL_movies.onnx"
     model.eval()
     torch.onnx.export(
-        model,                     # modèle PyTorch
-        dummy_input,               # exemple d'entrée
-        onnx_model_path,           # chemin de sauvegarde
-        input_names=['input'],     # nom de l'entrée
-        output_names=['output'],   # nom de la sortie
-        dynamic_axes={
-            'input': {0: 'batch_size'},   # batch_size dynamique
-            'output': {0: 'batch_size'}
-        },
-        opset_version=18           # version ONNX (récent)
+        model,
+        dummy_input,
+        onnx_model_path,
+        input_names=['input'],
+        output_names=['output'],
+        opset_version=18,
+        external_data=False,
+        dynamic_axes={'input': {0: 'batch_size'}, 'output': {0: 'batch_size'}},
+        export_params=True
     )
+    print(f"ONNX model saved: {onnx_model_path}")
 
-    print(f"✅ Modèle ONNX sauvegardé : {onnx_model_path}")
-    
-    ###############################
-    #Evaluate the model
-    ###############################
-    
-    y_pred_test = model( X_test_tr )
-    print( "Testing R**2: ", r2_score(  y_test_tr.numpy(),  y_pred_test.detach().numpy()     )  ) 
+    # Evaluate model
+    y_pred_test = model(X_test_tr)
+    print("Testing R²:", r2_score(y_test_tr.numpy(), y_pred_test.detach().numpy()))
+
+    # Print first 15 predictions vs real values
     list_preds = []
     list_reals = []
-    for i in range(15):
-    #for i in range(len(X_test_tr)):
+    for i in range(min(15, len(X_test_tr))):
+        np_real = y_test_tr[i].detach().numpy()
+        np_pred = y_pred_test[i].detach().numpy()
         print("************************************")
         print("pred, real")
-        np_real =   y_test_tr[i].detach().numpy()
-        np_pred = y_pred_test[i].detach().numpy()
-        print(( np_pred  , np_real))
+        print((np_pred, np_real))
         list_preds.append(np_pred[0])
         list_reals.append(np_real[0])
 
+
 if __name__ == "__main__":
-    main()  
+    main()
+
 
 '''
-0 loss= tensor(0.6944, grad_fn=<MseLossBackward0>)
-20 loss= tensor(0.3652, grad_fn=<MseLossBackward0>)
-40 loss= tensor(0.7056, grad_fn=<MseLossBackward0>)
-60 loss= tensor(0.7884, grad_fn=<MseLossBackward0>)
-80 loss= tensor(0.4971, grad_fn=<MseLossBackward0>)
-Testing R**2:  0.4242740869522095
+0 loss= tensor(1.0469, grad_fn=<MseLossBackward0>)
+20 loss= tensor(0.3630, grad_fn=<MseLossBackward0>)
+40 loss= tensor(0.5418, grad_fn=<MseLossBackward0>)
+60 loss= tensor(0.3984, grad_fn=<MseLossBackward0>)
+80 loss= tensor(0.5493, grad_fn=<MseLossBackward0>)
+
+Testing R**2:  0.40019679069519043
 ************************************
 pred, real
-(array([7.1904], dtype=float32), array([7.], dtype=float32))
+(array([6.5837], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([7.843], dtype=float32), array([8.], dtype=float32))
+(array([6.3429], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([7.0433], dtype=float32), array([7.], dtype=float32))
+(array([6.3264], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([7.3757], dtype=float32), array([7.], dtype=float32))
+(array([6.2758], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([6.7245], dtype=float32), array([8.], dtype=float32))
+(array([6.6559], dtype=float32), array([8.], dtype=float32))
 ************************************
 pred, real
-(array([6.1241], dtype=float32), array([7.], dtype=float32))
+(array([6.0136], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([6.0947], dtype=float32), array([6.], dtype=float32))
+(array([6.6528], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([7.5377], dtype=float32), array([7.], dtype=float32))
+(array([6.5163], dtype=float32), array([5.], dtype=float32))
 ************************************
 pred, real
-(array([7.885], dtype=float32), array([8.], dtype=float32))
+(array([5.9708], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([6.5246], dtype=float32), array([6.], dtype=float32))
+(array([5.962], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([5.6881], dtype=float32), array([6.], dtype=float32))
+(array([7.487], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([6.3245], dtype=float32), array([6.], dtype=float32))
+(array([5.799], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([6.2339], dtype=float32), array([6.], dtype=float32))
+(array([7.018], dtype=float32), array([6.], dtype=float32))
 ************************************
 pred, real
-(array([6.178], dtype=float32), array([7.], dtype=float32))
+(array([7.3829], dtype=float32), array([7.], dtype=float32))
 ************************************
 pred, real
-(array([6.9467], dtype=float32), array([7.], dtype=float32))
 '''

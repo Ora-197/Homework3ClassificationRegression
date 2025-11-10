@@ -211,7 +211,7 @@ def main():
         
     )
 
-    print(f"✅ ONNX model saved: {onnx_model_path}")
+    print(f" ONNX model saved: {onnx_model_path}")
     
     
     with torch.no_grad():

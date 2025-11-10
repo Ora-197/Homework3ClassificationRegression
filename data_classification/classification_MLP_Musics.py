@@ -207,7 +207,7 @@ def main():
         export_params=True     
     )
 
-    print(f"✅ ONNX model saved: {onnx_model_path}")
+    print(f"ONNX model saved: {onnx_model_path}")
     
     # --- Evaluation ---
     model.eval()
