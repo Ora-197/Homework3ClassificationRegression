@@ -29,7 +29,7 @@ def get_dataset_from_kaggle_regression() -> pd.DataFrame:
     """
     # Load CSV
     movies = pd.read_csv(
-        "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv",
+        "./data_regression/movies_metadata.csv",
         low_memory=False
     )
 
@@ -159,7 +159,7 @@ def predict_rating(
 
 
 # === Example usage ===
-model_path = '/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/model_regression_LR_movies.pt'
+model_path = './data_regression/model_regression_LR_movies.pt'
 epsilon = 1e-4
 
 movies = get_dataset_from_kaggle_regression()

@@ -29,8 +29,8 @@ def main():
     Example usage of the predict_genre function with a single sample.
     Loads the ONNX model and predicts the genre.
     """
-    onnx_model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/model_classification_MLP_musics_spotify.onnx" 
-    # onnx_model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/model_classification_DL_musics_spotify.onnx"
+    onnx_model_path = "./data_classification/model_classification_MLP_musics_spotify.onnx" 
+    # onnx_model_path = "./data_classification/model_classification_DL_musics_spotify.onnx"
 
     # Example sample (1 sample with 10 features)
     x_samples = np.array([

@@ -25,7 +25,7 @@ def get_dataset_from_kaggle_classification(target_total=5000) -> pd.DataFrame:
         pd.DataFrame: balanced dataset with 10 genres
     
     """
-    df = pd.read_csv('/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv')
+    df = pd.read_csv('./data_classification/SpotifyFeatures.csv')
     
     # Useful numeric columns
     features_numeric = [
@@ -195,7 +195,7 @@ samples_test = [
     np.array([0.15, 0.35, 240000, 0.50, 0.60, 0.30, -10.0, 0.02, 70.0, 0.30], dtype=np.float32),
 ]
 
-model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/model_classification_MLP_musics_spotify.pt"
+model_path = "./data_classification/model_classification_MLP_musics_spotify.pt"
 epsilon = 0.0001
 
 musics = get_dataset_from_kaggle_classification()

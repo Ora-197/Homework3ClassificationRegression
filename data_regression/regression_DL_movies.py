@@ -30,7 +30,7 @@ def get_dataset_from_kaggle_regression() -> pd.DataFrame:
         pd.DataFrame: preprocessed dataset with numeric features
     """
     movies = pd.read_csv(
-        "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv",
+        "./data_regression/movies_metadata.csv",
         low_memory=False
     )
 

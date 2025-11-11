@@ -31,7 +31,7 @@ def get_dataset_from_kaggle_regression() -> pd.DataFrame:
         pd.DataFrame: preprocessed dataset with numeric features
     """
     movies = pd.read_csv(
-        "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv",
+        "./data_regression/movies_metadata.csv",
         low_memory=False
     )
 
@@ -73,6 +73,10 @@ def get_graph(movies: pd.DataFrame):
     heatmap(cm, row_names=features, column_names=features, figsize=(20, 10))
     plt.show()
 
+def get_histogram(y):
+    _ = plt.hist(y, bins='auto') 
+    plt.title("Histogram with 'auto' bins for movies vote_average")
+    plt.show()  
 
 # === Linear Regression Model ===
 class LinRegNet(nn.Module):
@@ -193,6 +197,8 @@ def main():
         print((np_pred, np_real))
         list_preds.append(np_pred[0])
         list_reals.append(np_real[0])
+
+
 
 
 if __name__ == "__main__":

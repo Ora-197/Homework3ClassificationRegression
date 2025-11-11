@@ -29,9 +29,9 @@ def main():
     Example usage of the predict_regression function with a single sample.
     """
     # Uncomment the model you want to use
-    # onnx_model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/model_regression_LinearReg_movies.onnx"
-    # onnx_model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/model_regression_DL_movies.onnx"
-    onnx_model_path = "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/xgboost_movies_vote_average_ort.onnx"
+    # onnx_model_path = "./data_regression/model_regression_LinearReg_movies.onnx"
+    # onnx_model_path = "./data_regression/model_regression_DL_movies.onnx"
+    onnx_model_path = "./data_regression/xgboost_movies_vote_average_ort.onnx"
 
     # Example sample (1 sample with 7 features)
     x_samples = np.array([

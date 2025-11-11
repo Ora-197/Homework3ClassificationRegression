@@ -28,7 +28,7 @@ def get_dataset_from_kaggle_classification(target_total=5000):
     Returns:
         pd.DataFrame: balanced dataset with 10 genres
     """
-    df = pd.read_csv("/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv")
+    df = pd.read_csv("./data_classification/SpotifyFeatures.csv")
 
     # Useful numeric columns
     features_numeric = [
@@ -41,7 +41,7 @@ def get_dataset_from_kaggle_classification(target_total=5000):
     df = df.dropna(subset=['genre'] + features_numeric)
     df = df[features_numeric + ['genre']]
 
-    # Top 10 genres
+    # Top 10 genre
     top10_genres = df['genre'].value_counts().nlargest(10).index.tolist()
 
     print("Selected genres:", top10_genres)
@@ -225,9 +225,7 @@ if __name__ == "__main__":
 
 
 '''
-Genres retenus : ['Comedy', 'Soundtrack', 'Indie', 'Jazz', 'Pop', 'Electronic', 'Children’s Music', 'Folk', 'Hip-Hop', 'Rock']
-Échantillons par genre : 500 (total ≈ 5000)
-Dataset final : (5000, 11)
+
 0 loss= tensor(2.1273, grad_fn=<NllLossBackward0>)
 100 loss= tensor(1.3337, grad_fn=<NllLossBackward0>)
 200 loss= tensor(1.5126, grad_fn=<NllLossBackward0>)

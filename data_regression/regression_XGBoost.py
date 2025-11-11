@@ -34,7 +34,7 @@ def get_dataset_from_kaggle_regression() -> pd.DataFrame:
         pd.DataFrame: preprocessed dataset with numeric features
     """
     movies = pd.read_csv(
-        "/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_regression/movies_metadata.csv",
+        "./data_regression/movies_metadata.csv",
         low_memory=False
     )
 
@@ -82,8 +82,6 @@ def main():
     Train an XGBoost regressor on movie data, evaluate it, 
     convert it to ONNX, and perform inference with ONNX runtime.
     """
-    batch_size = 16
-    epsilon = 1e-4
     np.set_printoptions(precision=4, suppress=True)
 
     # Load dataset

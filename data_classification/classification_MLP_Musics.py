@@ -25,7 +25,7 @@ def get_dataset_from_kaggle_classification(target_total=5000):
     Returns:
         pd.DataFrame: balanced dataset with 10 genres
     """
-    df = pd.read_csv("/Users/yohannmeunier/Study/M1/Applied_MachineLearning/HM3/data_classification/SpotifyFeatures.csv")
+    df = pd.read_csv("./data_classification/SpotifyFeatures.csv")
 
     # Useful numeric columns
     features_numeric = [
@@ -139,7 +139,7 @@ def main():
     np.set_printoptions(precision=4, suppress=True)
     batch_size    = 64
     learning_rate = 0.0005 ## 0.001
-    N_Epochs      = 100
+    N_Epochs      = 4000
     epsilon = 0.0001
     
     # --- Load Data ---
@@ -217,8 +217,9 @@ def main():
             preds = torch.argmax(logits, dim=1)
             print_metrics_function(y_real.squeeze().numpy(), preds.numpy())
 
+
 if __name__ == "__main__":
-    main()
+   main()
 
 
 '''
